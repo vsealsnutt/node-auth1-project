@@ -30,17 +30,15 @@ const router = express.Router();
     "message": "Password must be longer than 3 chars"
   }
  */
-router.post('/register',checkUsernameFree, checkPasswordLength, async (req, res, next) => {
-  try {
-    const { username, password } = req.body;
-    const hash = bcrypt.hashSync(password, 8);
-    const newUser = { username, password: hash };
+router.post('/register', checkUsernameFree, checkPasswordLength, async (req, res, next) => {
+  const { username, password } = req.body;
+  const hash = bcrypt.hashSync(password, 8);
 
-    const result = await User.add(newUser);
-    res.status(200).json({ 'user_id': result.user_id, 'username': result.username })
-  } catch (err) {
-    next(err);
-  }
+  User.add({ username, password: hash })
+    .then(user => {
+      res.status(201).json(user);
+    })
+    .catch(next);
 })
 
 /**
@@ -90,7 +88,6 @@ router.post('/login', checkUsernameExists, async (req, res, next) => {
  */
 router.get('/logout', async (req, res) => {
   if (req.session.user) {
-    const { uername } = req.session.user;
     req.session.destroy(err => {
       if (err) {
         res.json({ message: 'problem logging out' });
